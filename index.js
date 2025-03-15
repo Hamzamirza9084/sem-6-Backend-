@@ -21,7 +21,7 @@ app.use(cookieParser())
 app.use('/auth',UserRouter)
 
 mongoose
-    .connect(process.env.MURL{
+    .connect(process.env.MURL,{
         useNewUrlParser: true,
         useUnifiedTopology: true,
     })
