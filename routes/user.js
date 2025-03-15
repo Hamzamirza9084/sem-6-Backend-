@@ -115,22 +115,22 @@ router.post('/login/student', async (req, res) => {
   return res.json({ status: true, message: "Student logged in successfully" });
 });
 
-router.post('/login/faculty', async (req, res) => {
-  const { email, password } = req.body;
-  const faculty = await Faculty.findOne({ email });
-  if (!faculty) {
-      return res.json({ message: "Faculty is not registered" });
-  }
+// router.post('/login/faculty', async (req, res) => {
+//   const { email, password } = req.body;
+//   const faculty = await Faculty.findOne({ email });
+//   if (!faculty) {
+//       return res.json({ message: "Faculty is not registered" });
+//   }
 
-  const validPassword = await bcrypt.compare(password, faculty.password);
-  if (!validPassword) {
-      return res.json({ message: "password is incorrect" });
-  }
+//   const validPassword = await bcrypt.compare(password, faculty.password);
+//   if (!validPassword) {
+//       return res.json({ message: "password is incorrect" });
+//   }
 
-  const token = jwt.sign({ id: faculty._id, role: "Faculty" }, process.env.KEY, { expiresIn: '1h' });
-  res.cookie('token', token, { httpOnly: true, maxAge: 10800000 });
-  return res.json({ status: true, message: "Faculty logged in successfully" });
-});
+//   const token = jwt.sign({ id: faculty._id, role: "Faculty" }, process.env.KEY, { expiresIn: '1h' });
+//   res.cookie('token', token, { httpOnly: true, maxAge: 10800000 });
+//   return res.json({ status: true, message: "Faculty logged in successfully" });
+// });
 
 router.post('/login/hod', async (req, res) => {
   const { email, password } = req.body;
@@ -242,6 +242,30 @@ router.post('/reset/:token',async (req,res)=>{
   }
 })
 
+router.post('/login/student', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(401).json({ message: "Student is not registered" });
+    }
+
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(401).json({ message: "Password is incorrect" });
+    }
+
+    const token = jwt.sign({ id: user._id, role: "User" }, process.env.KEY, { expiresIn: '1h' });
+
+    res.cookie('token', token, { httpOnly: true, maxAge: 10800000 });
+    return res.status(200).json({ status: true, message: "Student logged in successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Middleware to verify user
 const verifyUser = (role) => {
   return async (req, res, next) => {
     try {
@@ -249,6 +273,7 @@ const verifyUser = (role) => {
       if (!token) {
         return res.status(401).json({ status: false, message: "No token provided" });
       }
+
       const decoded = jwt.verify(token, process.env.KEY);
 
       let user;
@@ -263,27 +288,26 @@ const verifyUser = (role) => {
       req.user = user;
       next();
     } catch (err) {
+      if (err.name === "TokenExpiredError") {
+        return res.status(401).json({ status: false, message: "Token has expired, please log in again" });
+      }
       return res.status(401).json({ status: false, message: "Invalid token" });
     }
   };
 };
 
+// Verification Routes
+router.get('/user/verify', verifyUser("User"), (req, res) => {
+  return res.json({ status: true, message: "Authorized", email: req.user.email });
+});
 
+router.get('/faculty/verify', verifyUser("Faculty"), (req, res) => {
+  return res.json({ status: true, message: "Authorized", email: req.user.email });
+});
 
-// router.get('/verify',verifyUser,(req,res)=>{
-//   const userEmail = req.user.email;
-//     return res.json({status:true ,message:"authorized",email:userEmail})
-// })
-
-
-router.get('/user/verify', verifyUser("User"), (req, res) => res.json({ status: true, message: "Authorized", email: req.user.email }));
-
-
-router.get('/faculty/verify', verifyUser("Faculty"), (req, res) => res.json({ status: true, message: "Authorized", email: req.user.email }));
-
-
-router.get('/hod/verify', verifyUser("HOD"), (req, res) => res.json({ status: true, message: "Authorized", email: req.user.email }));
-
+router.get('/hod/verify', verifyUser("HOD"), (req, res) => {
+  return res.json({ status: true, message: "Authorized", email: req.user.email });
+});
 
 router.get('/home',verifyUser,(req,res)=>{
   const userEmail = req.user.email;
