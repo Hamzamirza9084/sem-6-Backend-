@@ -11,7 +11,7 @@ const app = express()
 app.use(express.json())
 
 const corsOptions = {
-    origin: ['http://localhost:5173','https://sage-empanada-544ff4.netlify.app'], 
+    origin: ['http://localhost:5173','https://frolicking-marigold-49ce1d.netlify.app'], 
     methods: ['GET', 'POST', 'PUT', 'DELETE'], 
     credentials: true, 
 };
