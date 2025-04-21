@@ -5,6 +5,21 @@ import dotenv from 'dotenv'
 dotenv.config()
 import { UserRouter } from './routes/user.js'
 import cookieParser from 'cookie-parser'
+import session from 'express-session';
+import MongoStore from 'connect-mongo';
+
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'yoursecretkey',
+  resave: false,
+  saveUninitialized: false,
+  store: MongoStore.create({ mongoUrl: process.env.MURL }), // Optional: store in MongoDB
+  cookie: {
+    maxAge: 3600000, // 1 hour
+    secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
+    httpOnly: true
+  }
+}));
+
 
 const app = express()
 

@@ -12,6 +12,9 @@ import { Contactus } from '../modles/Contactus.js';
 import { ProfessorAttendance } from '../modles/ProfessorAttendance.js';
 import axios from 'axios';
 import mongoose from "mongoose";
+import session from 'express-session';
+import MongoStore from 'connect-mongo';
+
 
 
 router.post('/signuph', async(req,res)=>{
@@ -100,20 +103,34 @@ router.post('/signup', async(req,res)=>{
 
 router.post('/login/student', async (req, res) => {
   const { email, password } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) {
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
       return res.json({ message: "Student is not registered" });
-  }
+    }
 
-  const validPassword = await bcrypt.compare(password, user.password);
-  if (!validPassword) {
-      return res.json({ message: "password is incorrect" });
-  }
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.json({ message: "Password is incorrect" });
+    }
 
-  const token = jwt.sign({ id: user._id, role: "Student" }, process.env.KEY, { expiresIn: '1h' });
-  res.cookie('token', token, { httpOnly: true, maxAge: 10800000 });
-  return res.json({ status: true, message: "Student logged in successfully" });
+    // Store user info in session
+    req.session.user = {
+      id: user._id,
+      role: "Student",
+      name: user.name,
+      email: user.email
+    };
+
+    return res.json({ status: true, message: "Student logged in successfully" });
+
+  } catch (err) {
+    console.error("Login error:", err);
+    return res.status(500).json({ status: false, message: "Internal server error" });
+  }
 });
+
 
 router.post('/login/faculty', async (req, res) => {
   const { email, password } = req.body;
