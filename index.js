@@ -12,6 +12,7 @@ import MongoStore from 'connect-mongo';
 
 
 const app = express()
+app.use(cors(corsOptions));
 
 app.use(express.json())
 
@@ -34,7 +35,7 @@ app.use(session({
     }
   }));
 
-app.use(cors(corsOptions));
+
 app.use(cookieParser())
 app.use('/auth',UserRouter)
 
