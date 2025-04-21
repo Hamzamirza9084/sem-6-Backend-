@@ -12,7 +12,7 @@ import MongoStore from 'connect-mongo';
 
 
 const app = express()
-app.use(cors(corsOptions));
+
 
 app.use(express.json())
 
@@ -22,6 +22,7 @@ const corsOptions = {
     methods: ['GET', 'POST', 'PUT', 'DELETE'], 
     credentials: true, 
 };
+app.use(cors(corsOptions));
 
 app.use(session({
     secret: process.env.SESSION_SECRET || 'yoursecretkey',
