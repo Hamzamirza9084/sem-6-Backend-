@@ -294,18 +294,16 @@ const verifyUser = (role) => {
 
 
 router.get('/user/verify', (req, res) => {
-    console.log("Received Token:", req.cookies.token);
-    if (!req.cookies.token) {
-        return res.status(401).json({ status: false, message: "No token provided" });
-    }
-    try {
-        const decoded = jwt.verify(req.cookies.token, process.env.KEY);
-        console.log("Decoded Token:", decoded);
-        res.json({ status: true, message: "Authorized", email: decoded.email });
-    } catch (err) {
-        console.error("JWT Verification Error:", err);
-        return res.status(401).json({ status: false, message: "Invalid token" });
-    }
+  if (!req.session.user) {
+    return res.status(401).json({ status: false, message: "Not logged in" });
+  }
+
+  console.log("Session User:", req.session.user);
+  return res.json({
+    status: true,
+    message: "Authorized",
+    email: req.session.user.email
+  });
 });
 
 
